@@ -8,6 +8,7 @@ from functions.get_files_info import schema_get_files_info
 from functions.get_file_content import schema_get_file_content
 from functions.write_file import schema_write_file
 from functions.run_python_file import schema_run_python_file
+from functions.call_function import call_function
 
 def main():
     load_dotenv()
@@ -28,16 +29,22 @@ def main():
     print(sys.argv)
     if (len(sys.argv) > 0):
         response = client.models.generate_content(model="gemini-2.0-flash-001", contents=messages, config=types.GenerateContentConfig(system_instruction=system_prompt, tools=[available_functions]),)
+        is_verbose = False
         if (sys.argv[-1] == "--verbose"):
+            is_verbose = True
             print(response.text)
             print(f"User prompt: {user_prompt}")
             print(f"Prompt tokens: {response.usage_metadata.prompt_token_count}")
             print(f"Response tokens: {response.usage_metadata.candidates_token_count}")
         if response.function_calls != None and len(response.function_calls) > 0:
             for function_call_part in response.function_calls:
-                print(f"Calling function: {function_call_part.name}({function_call_part.args})")
-            
-        
+                try:
+                    function_call_result = call_function(function_call_part, is_verbose)
+                    if is_verbose:
+                        print(f"-> {function_call_result.parts[0].function_response.response}")
+    
+                except Exception as e:
+                    raise Exception("fatal exception")
     else:
         print("ERROR")
         return 1
