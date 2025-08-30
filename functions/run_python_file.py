@@ -1,5 +1,25 @@
 import os
 import subprocess
+from google.genai import types
+
+schema_run_python_file = types.FunctionDeclaration(
+        name="run_python_file",
+        description="Executes the specified Python file with optional arguments, constrained to the working directory. Captures and returns both standard output and error output from the execution.",
+        parameters=types.Schema(
+            type=types.Type.OBJECT,
+            properties={
+                "file_path": types.Schema(
+                    type=types.Type.STRING,
+                    description="The path to the Python file to execute, relative to the working directory.",
+                ),
+                "args": types.Schema(
+                    type=types.Type.ARRAY,
+                    items=types.Schema(type=types.Type.STRING),
+                    description="A list of arguments to pass to the Python file. Each argument has to be a string."
+                )
+            },
+        ),
+    )
 
 def run_python_file(working_directory, file_path, args=[]):
     try:
@@ -16,7 +36,7 @@ def run_python_file(working_directory, file_path, args=[]):
         if not completed_process_obj.stdout and not completed_process_obj.stderr:
             return "No output produced"
             
-        return f"STDOUT: {completed_process_obj.stdout.decode("utf-8")}\nSTDERR: {completed_process_obj.stderr.decode("utf-8")}\n{f"Process exited with code {completed_process_obj.returncode}" if completed_process_obj.returncode != 0 else ""}"
+        return f"STDOUT: \n{completed_process_obj.stdout.decode("utf-8")}\nSTDERR: \n{completed_process_obj.stderr.decode("utf-8")}\n{f"Process exited with code {completed_process_obj.returncode}" if completed_process_obj.returncode != 0 else ""}"
     
     except Exception as e:
         return f"Error: executing Python file: {e}"
